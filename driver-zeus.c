@@ -151,6 +151,21 @@ static void notify_io_thread(struct cgpu_info *zeus)
 	(void)write(info->wu_pipefd[PIPE_W], &tickle, 1);
 }
 
+static const uint64_t diff_code = 0xFFFF000000000000ull;
+static double target_diff(const unsigned char *target)
+{
+        uint64_t *data64, d64;
+        char rtarget[32];
+
+        swab256(rtarget, target);
+        data64=(uint64_t *)(rtarget + 2);
+        d64=be64toh(*data64);
+        if(unlikely(!d64))
+        d64=1;
+
+        return diff_code/d64;
+}
+
 /************************************************************
  * I/O helper functions
  ************************************************************/
@@ -727,19 +742,15 @@ static bool zeus_send_work(struct cgpu_info *zeus, struct work *work)
 	struct ZEUS_INFO *info = zeus->device_data;
 	unsigned char cmdpkt[ZEUS_COMMAND_PKT_LEN];
 	int ret;
-	uint32_t diff_code, diff;
 
-	diff = work->work_difficulty;
-	if (diff < 1)
-		diff = 1;
+	uint32_t diff = target_diff(work->target);	
 
-	diff_code = 0xffff / diff;
 	applog(LOG_DEBUG, "zeus_send_work: diff=%d diff_code=%04x", diff, diff_code);
 
 	cmdpkt[0] = info->freqcode;
 	cmdpkt[1] = ~(info->freqcode);
-	cmdpkt[2] = (diff_code & 0xff00) >> 8;
-	cmdpkt[3] = (diff_code & 0x00ff);
+	cmdpkt[2] = diff_code; 
+	cmdpkt[3] = diff_code;
 
 	memcpy(cmdpkt + 4, work->data, 80);
 	rev(cmdpkt + 4, 80);
