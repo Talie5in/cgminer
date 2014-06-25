@@ -749,8 +749,8 @@ static bool zeus_send_work(struct cgpu_info *zeus, struct work *work)
 
 	cmdpkt[0] = info->freqcode;
 	cmdpkt[1] = ~(info->freqcode);
-	cmdpkt[2] = diff_code; 
-	cmdpkt[3] = diff_code;
+	cmdpkt[2] = target_diff; 
+	cmdpkt[3] = target_diff;
 
 	memcpy(cmdpkt + 4, work->data, 80);
 	rev(cmdpkt + 4, 80);
