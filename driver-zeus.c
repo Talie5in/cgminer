@@ -743,14 +743,15 @@ static bool zeus_send_work(struct cgpu_info *zeus, struct work *work)
 	unsigned char cmdpkt[ZEUS_COMMAND_PKT_LEN];
 	int ret;
 
-	uint32_t diff = target_diff(work->target);	
+	uint32_t diff = target_diff(work->target);
+	uint32_t diffinv = 0xffff/diff;
 
-	applog(LOG_DEBUG, "zeus_send_work: diff=%d diff_code=%04x", diff, diff_code);
+	applog(LOG_DEBUG, "zeus_send_work: diff=%d diffinv=%04x", diff, diffinv);
 
 	cmdpkt[0] = info->freqcode;
 	cmdpkt[1] = ~(info->freqcode);
-	cmdpkt[2] = target_diff; 
-	cmdpkt[3] = target_diff;
+	cmdpkt[2] = (diffinv & 0xff00) >> 8;
+	cmdpkt[3] = (diffinv & 0x00ff);
 
 	memcpy(cmdpkt + 4, work->data, 80);
 	rev(cmdpkt + 4, 80);
